@@ -9,8 +9,8 @@ import vercel from '@astrojs/vercel';
 // https://astro.build/config
 export default defineConfig({
   integrations: [react(), markdoc(), keystatic()],
-  // Keystatic GitHub auth needs serverless functions; use hybrid output for Vercel
-  output: 'hybrid',
+  // Keystatic GitHub auth needs serverless functions; use server output for Vercel
+  output: 'server',
   adapter: vercel(),
   vite: {
     plugins: [tailwindcss()]
