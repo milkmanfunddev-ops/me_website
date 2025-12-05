@@ -1,0 +1,97 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Sansita:wght@400;700&display=swap');
+@import "tailwindcss";
+
+/* Mealvana Endurance Brand Design System */
+@theme {
+  /* Primary Colors */
+  --color-blackberry: #3D1F47;
+  --color-blackberry-light: #4A2854;
+  --color-blackberry-dark: #2D1535;
+
+  /* Light Colors */
+  --color-cream: #F5F3ED;
+  --color-cream-dark: #E8E6E0;
+
+  /* Accent Colors */
+  --color-orange: #FF8B3D;
+  --color-orange-light: #FFA05A;
+  --color-orange-dark: #E67A2E;
+  --color-electrolyte: #5DE4D3;
+  --color-electrolyte-light: #7FEEE0;
+  --color-dragonfruit: #E84393;
+
+  /* Text Colors */
+  --color-text-dark: #381633;
+  --color-text-light: #F8F6EB;
+  --color-text-secondary: #666666;
+
+  /* Border & Surface Colors */
+  --color-border-light: #E0E0E0;
+  --color-border-dark: #333333;
+  --color-surface-white: #FFFFFF;
+  --color-surface-light: #F9F9F9;
+
+  /* Typography */
+  --font-sansita: 'Sansita', sans-serif;
+  --font-inter: 'Inter', sans-serif;
+
+  /* Border Radius */
+  --radius-button: 100px;
+  --radius-card: 15px;
+  --radius-input: 15px;
+}
+
+/* Base styles */
+body {
+  font-family: var(--font-inter);
+  color: var(--color-text-dark);
+  background-color: var(--color-cream);
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-sansita);
+  font-weight: 700;
+}
+
+/* Button styles */
+.btn-primary {
+  background-color: var(--color-orange);
+  color: white;
+  border-radius: var(--radius-button);
+  padding: 16px 40px;
+  font-family: var(--font-sansita);
+  font-weight: 700;
+  font-size: 16px;
+  transition: all 0.2s ease;
+}
+
+.btn-primary:hover {
+  background-color: var(--color-orange-light);
+  transform: scale(1.02);
+}
+
+.btn-secondary {
+  background-color: white;
+  color: var(--color-orange);
+  border: 1px solid var(--color-orange);
+  border-radius: var(--radius-button);
+  padding: 16px 40px;
+  font-family: var(--font-sansita);
+  font-weight: 700;
+  font-size: 16px;
+  transition: all 0.2s ease;
+}
+
+.btn-secondary:hover {
+  background-color: var(--color-orange);
+  color: white;
+}
+
+/* Card styles */
+.card {
+  background-color: var(--color-surface-white);
+  border-radius: var(--radius-card);
+  padding: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border: 1px solid var(--color-border-light);
+}

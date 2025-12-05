@@ -1,0 +1,402 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'Mealvana Endurance WordPress Site - EC2 + RDS Free Tier Stack'
+
+Parameters:
+  Environment:
+    Type: String
+    Default: production
+    AllowedValues:
+      - production
+      - staging
+    Description: Environment name
+
+  DBPassword:
+    Type: String
+    NoEcho: true
+    MinLength: 8
+    Description: RDS MySQL master password
+
+  KeyPairName:
+    Type: String
+    Description: EC2 Key Pair name for SSH access (leave empty to skip SSH)
+    Default: ''
+
+  DomainName:
+    Type: String
+    Default: endurance.mealvana.io
+    Description: Domain name for the WordPress site
+
+Conditions:
+  HasKeyPair: !Not [!Equals [!Ref KeyPairName, '']]
+
+Resources:
+  #############################################
+  # VPC and Networking
+  #############################################
+  VPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.0.0.0/16
+      EnableDnsHostnames: true
+      EnableDnsSupport: true
+      Tags:
+        - Key: Name
+          Value: !Sub '${Environment}-mealvana-vpc'
+
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - Key: Name
+          Value: !Sub '${Environment}-mealvana-igw'
+
+  AttachGateway:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref VPC
+      InternetGatewayId: !Ref InternetGateway
+
+  PublicSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 10.0.1.0/24
+      AvailabilityZone: !Select [0, !GetAZs '']
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: !Sub '${Environment}-public-subnet-1'
+
+  PublicSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 10.0.2.0/24
+      AvailabilityZone: !Select [1, !GetAZs '']
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: !Sub '${Environment}-public-subnet-2'
+
+  PrivateSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 10.0.3.0/24
+      AvailabilityZone: !Select [0, !GetAZs '']
+      Tags:
+        - Key: Name
+          Value: !Sub '${Environment}-private-subnet-1'
+
+  PrivateSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 10.0.4.0/24
+      AvailabilityZone: !Select [1, !GetAZs '']
+      Tags:
+        - Key: Name
+          Value: !Sub '${Environment}-private-subnet-2'
+
+  PublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: !Sub '${Environment}-public-rt'
+
+  PublicRoute:
+    Type: AWS::EC2::Route
+    DependsOn: AttachGateway
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
+
+  PublicSubnet1RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnet1
+      RouteTableId: !Ref PublicRouteTable
+
+  PublicSubnet2RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnet2
+      RouteTableId: !Ref PublicRouteTable
+
+  #############################################
+  # Security Groups
+  #############################################
+  EC2SecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security group for WordPress EC2 instance
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+          Description: HTTP access
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 0.0.0.0/0
+          Description: HTTPS access
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0
+          Description: SSH access (restrict this in production)
+      Tags:
+        - Key: Name
+          Value: !Sub '${Environment}-wordpress-ec2-sg'
+
+  RDSSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security group for RDS MySQL instance
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 3306
+          ToPort: 3306
+          SourceSecurityGroupId: !Ref EC2SecurityGroup
+          Description: MySQL access from EC2
+      Tags:
+        - Key: Name
+          Value: !Sub '${Environment}-wordpress-rds-sg'
+
+  #############################################
+  # RDS MySQL Database (Free Tier)
+  #############################################
+  DBSubnetGroup:
+    Type: AWS::RDS::DBSubnetGroup
+    Properties:
+      DBSubnetGroupDescription: Subnet group for WordPress RDS
+      SubnetIds:
+        - !Ref PrivateSubnet1
+        - !Ref PrivateSubnet2
+      Tags:
+        - Key: Name
+          Value: !Sub '${Environment}-wordpress-db-subnet-group'
+
+  RDSInstance:
+    Type: AWS::RDS::DBInstance
+    DeletionPolicy: Snapshot
+    Properties:
+      DBInstanceIdentifier: !Sub '${Environment}-wordpress-db'
+      DBInstanceClass: db.t3.micro
+      Engine: mysql
+      EngineVersion: '8.0'
+      MasterUsername: wordpress_admin
+      MasterUserPassword: !Ref DBPassword
+      DBName: wordpress
+      AllocatedStorage: 20
+      StorageType: gp2
+      PubliclyAccessible: false
+      VPCSecurityGroups:
+        - !Ref RDSSecurityGroup
+      DBSubnetGroupName: !Ref DBSubnetGroup
+      BackupRetentionPeriod: 7
+      MultiAZ: false
+      Tags:
+        - Key: Name
+          Value: !Sub '${Environment}-wordpress-db'
+
+  #############################################
+  # EC2 Instance (Free Tier)
+  #############################################
+  EC2Role:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub '${Environment}-wordpress-ec2-role'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ec2.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
+      Tags:
+        - Key: Name
+          Value: !Sub '${Environment}-wordpress-ec2-role'
+
+  EC2InstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      InstanceProfileName: !Sub '${Environment}-wordpress-instance-profile'
+      Roles:
+        - !Ref EC2Role
+
+  ElasticIP:
+    Type: AWS::EC2::EIP
+    Properties:
+      Domain: vpc
+      Tags:
+        - Key: Name
+          Value: !Sub '${Environment}-wordpress-eip'
+
+  ElasticIPAssociation:
+    Type: AWS::EC2::EIPAssociation
+    DependsOn: WordPressInstance
+    Properties:
+      InstanceId: !Ref WordPressInstance
+      EIP: !Ref ElasticIP
+
+  WordPressInstance:
+    Type: AWS::EC2::Instance
+    DependsOn: RDSInstance
+    Properties:
+      InstanceType: t2.micro
+      ImageId: !Sub '{{resolve:ssm:/aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2}}'
+      SubnetId: !Ref PublicSubnet1
+      SecurityGroupIds:
+        - !Ref EC2SecurityGroup
+      IamInstanceProfile: !Ref EC2InstanceProfile
+      KeyName: !If [HasKeyPair, !Ref KeyPairName, !Ref 'AWS::NoValue']
+      BlockDeviceMappings:
+        - DeviceName: /dev/xvda
+          Ebs:
+            VolumeSize: 20
+            VolumeType: gp2
+            DeleteOnTermination: true
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash -xe
+
+          # Log all output
+          exec > >(tee /var/log/user-data.log) 2>&1
+
+          echo "=== Starting WordPress Installation ==="
+
+          # Update system
+          yum update -y
+
+          # Install Apache, PHP 8.0, and required extensions
+          amazon-linux-extras install -y php8.0
+          yum install -y httpd php-mysqlnd php-fpm php-json php-xml php-mbstring php-gd php-intl php-zip unzip
+
+          # Start and enable Apache
+          systemctl start httpd
+          systemctl enable httpd
+
+          # Download and install WordPress
+          cd /tmp
+          wget https://wordpress.org/latest.tar.gz
+          tar -xzf latest.tar.gz
+
+          # Configure WordPress
+          cp -r wordpress/* /var/www/html/
+          cd /var/www/html
+
+          # Create wp-config.php
+          cp wp-config-sample.php wp-config.php
+
+          # Update database configuration
+          sed -i "s/database_name_here/wordpress/" wp-config.php
+          sed -i "s/username_here/wordpress_admin/" wp-config.php
+          sed -i "s/password_here/${DBPassword}/" wp-config.php
+          sed -i "s/localhost/${RDSInstance.Endpoint.Address}/" wp-config.php
+
+          # Generate and add security keys
+          SALT=$(curl -s https://api.wordpress.org/secret-key/1.1/salt/)
+          printf '%s\n' "g/put your unique phrase here/d" w | ed -s wp-config.php
+          echo "$SALT" >> wp-config.php
+
+          # Add direct filesystem method for plugin installation
+          echo "define('FS_METHOD', 'direct');" >> wp-config.php
+
+          # Set permissions
+          chown -R apache:apache /var/www/html
+          chmod -R 755 /var/www/html
+
+          # Configure Apache for WordPress permalinks
+          cat > /etc/httpd/conf.d/wordpress.conf << 'APACHECONF'
+          <Directory "/var/www/html">
+              AllowOverride All
+              Require all granted
+          </Directory>
+          APACHECONF
+
+          # Create .htaccess for pretty permalinks
+          cat > /var/www/html/.htaccess << 'HTACCESS'
+          # BEGIN WordPress
+          <IfModule mod_rewrite.c>
+          RewriteEngine On
+          RewriteBase /
+          RewriteRule ^index\.php$ - [L]
+          RewriteCond %{REQUEST_FILENAME} !-f
+          RewriteCond %{REQUEST_FILENAME} !-d
+          RewriteRule . /index.php [L]
+          </IfModule>
+          # END WordPress
+          HTACCESS
+
+          chown apache:apache /var/www/html/.htaccess
+
+          # Enable mod_rewrite
+          sed -i '/<Directory "\/var\/www\/html">/,/<\/Directory>/ s/AllowOverride None/AllowOverride All/' /etc/httpd/conf/httpd.conf
+
+          # Restart Apache
+          systemctl restart httpd
+
+          # Install WP-CLI for easier management
+          curl -O https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar
+          chmod +x wp-cli.phar
+          mv wp-cli.phar /usr/local/bin/wp
+
+          echo "=== WordPress Installation Complete ==="
+          echo "RDS Endpoint: ${RDSInstance.Endpoint.Address}"
+
+          # Signal completion
+          /opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource WordPressInstance --region ${AWS::Region}
+      Tags:
+        - Key: Name
+          Value: !Sub '${Environment}-wordpress-ec2'
+    CreationPolicy:
+      ResourceSignal:
+        Timeout: PT15M
+
+#############################################
+# Outputs
+#############################################
+Outputs:
+  WebsiteURL:
+    Description: WordPress website URL (use this for initial setup)
+    Value: !Sub 'http://${ElasticIP}'
+
+  ElasticIP:
+    Description: Elastic IP address - point your DNS here
+    Value: !Ref ElasticIP
+
+  RDSEndpoint:
+    Description: RDS MySQL endpoint
+    Value: !GetAtt RDSInstance.Endpoint.Address
+
+  EC2InstanceId:
+    Description: EC2 Instance ID
+    Value: !Ref WordPressInstance
+
+  SSHCommand:
+    Description: SSH command to connect to EC2 (if key pair was provided)
+    Value: !If
+      - HasKeyPair
+      - !Sub 'ssh -i ${KeyPairName}.pem ec2-user@${ElasticIP}'
+      - 'No key pair configured - use AWS Systems Manager Session Manager'
+
+  DomainSetup:
+    Description: DNS Configuration Instructions
+    Value: !Sub 'Create an A record for ${DomainName} pointing to ${ElasticIP}'
+
+  NextSteps:
+    Description: Post-deployment steps
+    Value: !Sub |
+      1. Visit http://${ElasticIP} to complete WordPress setup
+      2. Update DNS: Create A record for ${DomainName} -> ${ElasticIP}
+      3. Install SSL certificate using Let's Encrypt (see README)
+      4. Install Hello Elementor theme and Elementor plugin
