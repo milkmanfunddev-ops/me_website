@@ -48,7 +48,7 @@ const sortedPosts = posts.sort((a, b) => {
                 </time>
               )}
               <h2 class="text-xl font-sansita font-bold text-text-dark">
-                <a href={`/blog/${post.slug}`} class="hover:text-orange transition-colors">
+                <a href={`/blog/${post.id}`} class="hover:text-orange transition-colors">
                   {post.data.title}
                 </a>
               </h2>
@@ -58,7 +58,7 @@ const sortedPosts = posts.sort((a, b) => {
                 </p>
               )}
               <a
-                href={`/blog/${post.slug}`}
+                href={`/blog/${post.id}`}
                 class="inline-flex items-center text-orange font-semibold hover:text-orange-dark transition-colors"
               >
                 Read More
