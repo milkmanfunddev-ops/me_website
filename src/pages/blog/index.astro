@@ -8,11 +8,17 @@ import { getCollection } from 'astro:content';
 export const prerender = true;
 
 const posts = await getCollection('posts');
-const sortedPosts = posts.sort((a, b) => {
-  const dateA = a.data.pubDate ? new Date(a.data.pubDate).getTime() : 0;
-  const dateB = b.data.pubDate ? new Date(b.data.pubDate).getTime() : 0;
-  return dateB - dateA;
-});
+const sortedPosts = posts
+  .map(post => ({
+    ...post,
+    // Generate clean slug from id (strip /index suffix for folder-based posts)
+    slug: post.id.replace(/\/index$/, ''),
+  }))
+  .sort((a, b) => {
+    const dateA = a.data.pubDate ? new Date(a.data.pubDate).getTime() : 0;
+    const dateB = b.data.pubDate ? new Date(b.data.pubDate).getTime() : 0;
+    return dateB - dateA;
+  });
 ---
 
 <Layout title="Blog" description="Nutrition tips, training guides, and race day strategies for endurance athletes.">
@@ -51,7 +57,7 @@ const sortedPosts = posts.sort((a, b) => {
                 </time>
               )}
               <h2 class="text-xl font-sansita font-bold text-text-dark">
-                <a href={`/blog/${post.id}`} class="hover:text-orange transition-colors">
+                <a href={`/blog/${post.slug}`} class="hover:text-orange transition-colors">
                   {post.data.title}
                 </a>
               </h2>
@@ -61,7 +67,7 @@ const sortedPosts = posts.sort((a, b) => {
                 </p>
               )}
               <a
-                href={`/blog/${post.id}`}
+                href={`/blog/${post.slug}`}
                 class="inline-flex items-center text-orange font-semibold hover:text-orange-dark transition-colors"
               >
                 Read More
