@@ -1,21 +1,31 @@
 ---
-const navItems = [
-  { href: '/', label: 'Home' },
-  { href: '/blog', label: 'Blog' },
-  { href: '/whats-new', label: "What's New" },
-  { href: '/support', label: 'Support' },
+import { getSiteSettings, urlFor } from '../lib/sanity';
+
+const siteSettings = await getSiteSettings();
+
+// Fallback navigation items if not set in Sanity
+const defaultNavItems = [
+  { label: 'Home', href: '/' },
+  { label: 'Blog', href: '/blog' },
+  { label: "What's New", href: '/whats-new' },
+  { label: 'Support', href: '/support' },
 ];
+
+const navItems = siteSettings?.navItems?.length > 0 ? siteSettings.navItems : defaultNavItems;
+const siteName = siteSettings?.siteName || 'Mealvana Endurance';
+const ctaButton = siteSettings?.ctaButton || { label: 'Download', href: 'https://testflight.apple.com/join/1HJG86nz' };
+const logoUrl = siteSettings?.logo ? urlFor(siteSettings.logo).width(64).url() : '/images/app-icon.png';
 ---
 
 <header class="fixed top-0 left-0 right-0 z-50 bg-blackberry/95 backdrop-blur-sm">
   <nav class="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
     <a href="/" class="flex items-center gap-2">
-      <img src="/images/app-icon.png" alt="Mealvana" class="w-8 h-8 rounded-lg" />
-      <span class="font-sansita text-xl font-bold text-text-light">Mealvana Endurance</span>
+      <img src={logoUrl} alt={siteName} class="w-8 h-8 rounded-lg" />
+      <span class="font-sansita text-xl font-bold text-text-light">{siteName}</span>
     </a>
 
     <div class="hidden md:flex items-center gap-8">
-      {navItems.map((item) => (
+      {navItems.map((item: { label: string; href: string }) => (
         <a
           href={item.href}
           class="text-text-light/80 hover:text-text-light transition-colors font-inter"
@@ -23,8 +33,13 @@ const navItems = [
           {item.label}
         </a>
       ))}
-      <a href="https://testflight.apple.com/join/1HJG86nz" target="_blank" rel="noopener noreferrer" class="btn-primary text-sm py-2 px-6">
-        Download
+      <a
+        href={ctaButton.href}
+        target={ctaButton.href?.startsWith('http') ? '_blank' : undefined}
+        rel={ctaButton.href?.startsWith('http') ? 'noopener noreferrer' : undefined}
+        class="btn-primary text-sm py-2 px-6"
+      >
+        {ctaButton.label}
       </a>
     </div>
 
@@ -42,7 +57,7 @@ const navItems = [
 
   <!-- Mobile menu -->
   <div id="mobile-menu" class="hidden md:hidden bg-blackberry-light px-6 py-4">
-    {navItems.map((item) => (
+    {navItems.map((item: { label: string; href: string }) => (
       <a
         href={item.href}
         class="block py-2 text-text-light/80 hover:text-text-light transition-colors"
@@ -50,8 +65,13 @@ const navItems = [
         {item.label}
       </a>
     ))}
-    <a href="https://testflight.apple.com/join/1HJG86nz" target="_blank" rel="noopener noreferrer" class="btn-primary inline-block mt-4 text-sm py-2 px-6">
-      Download
+    <a
+      href={ctaButton.href}
+      target={ctaButton.href?.startsWith('http') ? '_blank' : undefined}
+      rel={ctaButton.href?.startsWith('http') ? 'noopener noreferrer' : undefined}
+      class="btn-primary inline-block mt-4 text-sm py-2 px-6"
+    >
+      {ctaButton.label}
     </a>
   </div>
 </header>

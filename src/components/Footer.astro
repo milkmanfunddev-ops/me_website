@@ -1,5 +1,30 @@
 ---
+import { getSiteSettings, urlFor } from '../lib/sanity';
+
+const siteSettings = await getSiteSettings();
 const currentYear = new Date().getFullYear();
+
+// Fallback values
+const siteName = siteSettings?.siteName || 'Mealvana Endurance';
+const footerDescription = siteSettings?.footerDescription || 'Personalized nutrition plans for endurance athletes. Science-backed meal planning tailored to your training, your body, and your goals.';
+const logoUrl = siteSettings?.logo ? urlFor(siteSettings.logo).width(80).url() : '/images/app-icon.png';
+
+// Default footer links if not set in Sanity
+const defaultQuickLinks = [
+  { label: 'Home', href: '/' },
+  { label: 'Blog', href: '/blog' },
+  { label: "What's New", href: '/whats-new' },
+  { label: 'Support', href: '/support' },
+];
+
+const defaultLegalLinks = [
+  { label: 'Privacy Policy', href: '/privacy-policy' },
+  { label: 'Terms of Use', href: '/terms' },
+  { label: 'Contact Us', href: 'mailto:support@mealvana.io' },
+];
+
+// Use Sanity footer links for Quick Links, fallback to defaults
+const quickLinks = siteSettings?.footerLinks?.length > 0 ? siteSettings.footerLinks : defaultQuickLinks;
 ---
 
 <footer class="bg-blackberry text-text-light">
@@ -8,11 +33,11 @@ const currentYear = new Date().getFullYear();
       <!-- Brand -->
       <div class="md:col-span-2">
         <div class="flex items-center gap-3 mb-4">
-          <img src="/images/app-icon.png" alt="Mealvana" class="w-10 h-10 rounded-lg" />
-          <h3 class="font-sansita text-2xl font-bold">Mealvana Endurance</h3>
+          <img src={logoUrl} alt={siteName} class="w-10 h-10 rounded-lg" />
+          <h3 class="font-sansita text-2xl font-bold">{siteName}</h3>
         </div>
         <p class="text-text-light/70 max-w-md mb-6">
-          Personalized nutrition plans for endurance athletes. Science-backed meal planning tailored to your training, your body, and your goals.
+          {footerDescription}
         </p>
         <a
           href="https://testflight.apple.com/join/1HJG86nz"
@@ -32,10 +57,13 @@ const currentYear = new Date().getFullYear();
       <div>
         <h4 class="font-sansita text-lg font-bold mb-4">Quick Links</h4>
         <ul class="space-y-2">
-          <li><a href="/" class="text-text-light/70 hover:text-text-light transition-colors">Home</a></li>
-          <li><a href="/blog" class="text-text-light/70 hover:text-text-light transition-colors">Blog</a></li>
-          <li><a href="/whats-new" class="text-text-light/70 hover:text-text-light transition-colors">What's New</a></li>
-          <li><a href="/support" class="text-text-light/70 hover:text-text-light transition-colors">Support</a></li>
+          {quickLinks.map((link: { label: string; href: string }) => (
+            <li>
+              <a href={link.href} class="text-text-light/70 hover:text-text-light transition-colors">
+                {link.label}
+              </a>
+            </li>
+          ))}
         </ul>
       </div>
 
@@ -43,9 +71,13 @@ const currentYear = new Date().getFullYear();
       <div>
         <h4 class="font-sansita text-lg font-bold mb-4">Legal</h4>
         <ul class="space-y-2">
-          <li><a href="/privacy-policy" class="text-text-light/70 hover:text-text-light transition-colors">Privacy Policy</a></li>
-          <li><a href="/terms" class="text-text-light/70 hover:text-text-light transition-colors">Terms of Use</a></li>
-          <li><a href="mailto:support@mealvana.io" class="text-text-light/70 hover:text-text-light transition-colors">Contact Us</a></li>
+          {defaultLegalLinks.map((link) => (
+            <li>
+              <a href={link.href} class="text-text-light/70 hover:text-text-light transition-colors">
+                {link.label}
+              </a>
+            </li>
+          ))}
         </ul>
       </div>
     </div>
