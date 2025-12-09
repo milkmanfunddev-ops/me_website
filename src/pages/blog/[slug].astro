@@ -2,28 +2,25 @@
 import Layout from '../../layouts/Layout.astro';
 import Header from '../../components/Header.astro';
 import Footer from '../../components/Footer.astro';
-import { getCollection, render } from 'astro:content';
-
-// Prerender blog posts for better performance
-export const prerender = true;
+import PortableText from '../../components/PortableText.astro';
+import { getPost, getPosts, urlFor } from '../../lib/sanity';
 
 export async function getStaticPaths() {
-  const posts = await getCollection('posts');
-  return posts.map((post) => {
-    // Handle both folder-based (slug/index) and direct file (slug) posts
-    const slug = post.id.replace(/\/index$/, '');
-    return {
-      params: { slug },
-      props: { post },
-    };
-  });
+  const posts = await getPosts();
+  return posts?.map((post: any) => ({
+    params: { slug: post.slug?.current },
+  })) || [];
 }
 
-const { post } = Astro.props;
-const { Content } = await render(post);
+const { slug } = Astro.params;
+const post = await getPost(slug as string);
+
+if (!post) {
+  return Astro.redirect('/404');
+}
 ---
 
-<Layout title={post.data.title} description={post.data.description}>
+<Layout title={post.title} description={post.description}>
   <Header />
 
   <main class="pt-24 pb-20 bg-cream min-h-screen">
@@ -40,19 +37,19 @@ const { Content } = await render(post);
       </a>
 
       <!-- Hero Image -->
-      {post.data.heroImage && (
+      {post.heroImage && (
         <img
-          src={post.data.heroImage}
-          alt={post.data.title}
+          src={urlFor(post.heroImage).width(800).height(400).url()}
+          alt={post.title}
           class="w-full h-64 md:h-96 object-cover rounded-card mb-8"
         />
       )}
 
       <!-- Post Header -->
       <header class="mb-10">
-        {post.data.pubDate && (
+        {post.publishedAt && (
           <time class="text-sm text-text-secondary">
-            {new Date(post.data.pubDate).toLocaleDateString('en-US', {
+            {new Date(post.publishedAt).toLocaleDateString('en-US', {
               year: 'numeric',
               month: 'long',
               day: 'numeric'
@@ -60,26 +57,24 @@ const { Content } = await render(post);
           </time>
         )}
         <h1 class="text-3xl md:text-4xl lg:text-5xl font-sansita font-bold text-text-dark mt-2 mb-4 leading-tight">
-          {post.data.title}
+          {post.title}
         </h1>
-        {post.data.description && (
+        {post.description && (
           <p class="text-xl text-text-secondary leading-relaxed">
-            {post.data.description}
+            {post.description}
           </p>
         )}
       </header>
 
       <!-- Post Content -->
-      <div class="prose prose-lg max-w-none">
-        <Content />
-      </div>
+      {post.content && <PortableText value={post.content} />}
 
       <!-- Share Section -->
       <div class="mt-16 pt-8 border-t border-border-light">
         <p class="text-text-secondary mb-4">Share this article:</p>
         <div class="flex gap-4">
           <a
-            href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(post.data.title)}&url=${Astro.url}`}
+            href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(post.title)}&url=${Astro.url}`}
             target="_blank"
             rel="noopener noreferrer"
             class="text-text-secondary hover:text-orange transition-colors"
@@ -166,27 +161,5 @@ const { Content } = await render(post);
     margin: 1.5rem 0;
     font-style: italic;
     color: var(--color-text-secondary);
-  }
-
-  .prose code {
-    background-color: var(--color-cream-dark);
-    padding: 0.2rem 0.4rem;
-    border-radius: 4px;
-    font-size: 0.875em;
-  }
-
-  .prose pre {
-    background-color: var(--color-blackberry);
-    color: var(--color-text-light);
-    padding: 1rem;
-    border-radius: var(--radius-card);
-    overflow-x: auto;
-    margin: 1.5rem 0;
-  }
-
-  .prose pre code {
-    background-color: transparent;
-    padding: 0;
-    border-radius: 0;
   }
 </style>
