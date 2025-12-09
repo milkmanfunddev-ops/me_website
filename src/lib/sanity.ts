@@ -22,7 +22,10 @@ export async function getPosts() {
       _id,
       title,
       slug,
+      author,
+      readTime,
       description,
+      tags,
       heroImage,
       publishedAt
     }
@@ -36,7 +39,10 @@ export async function getPost(slug: string) {
       _id,
       title,
       slug,
+      author,
+      readTime,
       description,
+      tags,
       heroImage,
       publishedAt,
       content

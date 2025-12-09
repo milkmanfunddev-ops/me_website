@@ -7,20 +7,49 @@ interface Props {
 
 const { value } = Astro.props;
 
+function renderMarks(child: any, markDefs: any[] = []) {
+  let text = child.text || '';
+
+  if (child.marks && child.marks.length > 0) {
+    child.marks.forEach((mark: string) => {
+      if (mark === 'strong') {
+        text = `<strong>${text}</strong>`;
+      } else if (mark === 'em') {
+        text = `<em>${text}</em>`;
+      } else if (mark === 'underline') {
+        text = `<u>${text}</u>`;
+      } else {
+        // Check if it's a link annotation
+        const linkDef = markDefs.find((def: any) => def._key === mark);
+        if (linkDef && linkDef._type === 'link') {
+          const href = linkDef.href;
+          const isExternal = href.startsWith('http');
+          const target = isExternal ? ' target="_blank" rel="noopener noreferrer"' : '';
+          text = `<a href="${href}"${target}>${text}</a>`;
+        }
+      }
+    });
+  }
+
+  return text;
+}
+
 function renderBlock(block: any) {
+  // Regular text block
   if (block._type === 'block') {
     const style = block.style || 'normal';
-    const children = block.children?.map((child: any) => {
-      let text = child.text || '';
-      if (child.marks) {
-        child.marks.forEach((mark: string) => {
-          if (mark === 'strong') text = `<strong>${text}</strong>`;
-          if (mark === 'em') text = `<em>${text}</em>`;
-          if (mark === 'underline') text = `<u>${text}</u>`;
-        });
-      }
-      return text;
-    }).join('');
+    const listItem = block.listItem;
+    const markDefs = block.markDefs || [];
+
+    const children = block.children?.map((child: any) => renderMarks(child, markDefs)).join('') || '';
+
+    // Handle list items
+    if (listItem === 'bullet') {
+      return `<li>${children}</li>`;
+    }
+    if (listItem === 'number') {
+      return `<li>${children}</li>`;
+    }
 
     switch (style) {
       case 'h2':
@@ -36,17 +65,237 @@ function renderBlock(block: any) {
     }
   }
 
+  // Image block
   if (block._type === 'image' && block.asset) {
     const url = urlFor(block).width(800).url();
-    return `<img src="${url}" alt="${block.alt || ''}" class="rounded-lg my-6" />`;
+    const alt = block.alt || '';
+    const caption = block.caption || '';
+    return `
+      <figure class="my-8">
+        <img src="${url}" alt="${alt}" class="rounded-lg w-full" />
+        ${caption ? `<figcaption class="text-center text-sm text-text-secondary mt-2">${caption}</figcaption>` : ''}
+      </figure>
+    `;
+  }
+
+  // Callout block
+  if (block._type === 'callout') {
+    const emoji = block.emoji || '💡';
+    const text = block.text || '';
+    const readTime = block.readTime || '';
+    return `
+      <aside class="callout-box">
+        <div class="callout-emoji">${emoji}</div>
+        <p class="callout-text">${text}</p>
+        ${readTime ? `<p class="callout-readtime"><strong>Read time:</strong> ${readTime}</p>` : ''}
+      </aside>
+    `;
+  }
+
+  // CTA Box block
+  if (block._type === 'ctaBox') {
+    const title = block.title || '';
+    const text = block.text || '';
+    const highlight = block.highlight || '';
+    const buttonText = block.buttonText || 'Learn More';
+    const buttonUrl = block.buttonUrl || '/';
+    return `
+      <div class="cta-box">
+        <h3 class="cta-title">${title}</h3>
+        <p class="cta-text">${text}</p>
+        ${highlight ? `<p class="cta-highlight"><strong>${highlight}</strong></p>` : ''}
+        <a href="${buttonUrl}" class="cta-button">${buttonText}</a>
+      </div>
+    `;
+  }
+
+  // Data Table block
+  if (block._type === 'dataTable') {
+    const caption = block.caption || '';
+    const headers = block.headers || [];
+    const rows = block.rows || [];
+
+    let tableHtml = `<div class="table-container">`;
+    if (caption) {
+      tableHtml += `<p class="table-caption"><strong>${caption}</strong></p>`;
+    }
+    tableHtml += `<table class="data-table"><thead><tr>`;
+    headers.forEach((header: string) => {
+      tableHtml += `<th>${header}</th>`;
+    });
+    tableHtml += `</tr></thead><tbody>`;
+    rows.forEach((row: any) => {
+      tableHtml += `<tr>`;
+      (row.cells || []).forEach((cell: string) => {
+        tableHtml += `<td>${cell}</td>`;
+      });
+      tableHtml += `</tr>`;
+    });
+    tableHtml += `</tbody></table></div>`;
+    return tableHtml;
   }
 
   return '';
 }
+
+// Group consecutive list items
+function groupBlocks(blocks: any[]) {
+  const result: any[] = [];
+  let currentList: { type: string; items: string[] } | null = null;
+
+  blocks.forEach((block) => {
+    if (block._type === 'block' && block.listItem) {
+      const listType = block.listItem === 'number' ? 'ol' : 'ul';
+
+      if (!currentList || currentList.type !== listType) {
+        if (currentList) {
+          result.push(currentList);
+        }
+        currentList = { type: listType, items: [] };
+      }
+      currentList.items.push(renderBlock(block));
+    } else {
+      if (currentList) {
+        result.push(currentList);
+        currentList = null;
+      }
+      result.push({ type: 'block', html: renderBlock(block) });
+    }
+  });
+
+  if (currentList) {
+    result.push(currentList);
+  }
+
+  return result;
+}
+
+const groupedBlocks = value ? groupBlocks(value) : [];
 ---
 
 <div class="prose prose-lg max-w-none">
-  {value?.map((block) => (
-    <Fragment set:html={renderBlock(block)} />
-  ))}
+  {groupedBlocks.map((item) => {
+    if (item.type === 'ul') {
+      return <ul set:html={item.items.join('')} />;
+    } else if (item.type === 'ol') {
+      return <ol set:html={item.items.join('')} />;
+    } else {
+      return <Fragment set:html={item.html} />;
+    }
+  })}
 </div>
+
+<style is:global>
+  /* Callout Box */
+  .callout-box {
+    background-color: #f0f7ff;
+    border-left: 4px solid #2D5F8D;
+    padding: 20px;
+    margin: 30px 0;
+    border-radius: 4px;
+  }
+
+  .callout-emoji {
+    font-size: 1.5rem;
+    margin-bottom: 8px;
+  }
+
+  .callout-text {
+    margin: 10px 0;
+    color: #666;
+    line-height: 1.6;
+  }
+
+  .callout-readtime {
+    margin-top: 12px;
+    font-size: 0.9rem;
+    color: #666;
+  }
+
+  /* CTA Box */
+  .cta-box {
+    background: linear-gradient(135deg, #2D5F8D 0%, #4A90C8 50%, #5BA3D8 100%);
+    padding: 35px;
+    border-radius: 12px;
+    margin: 40px 0;
+    text-align: center;
+    color: white;
+    box-shadow: 0 4px 20px rgba(45, 95, 141, 0.3);
+  }
+
+  .cta-title {
+    color: white !important;
+    margin-top: 0 !important;
+    font-size: 1.75rem;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  }
+
+  .cta-text {
+    font-size: 1.1rem;
+    line-height: 1.6;
+    margin: 20px 0;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.15);
+  }
+
+  .cta-highlight {
+    font-size: 1.15rem;
+    margin: 20px 0;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.15);
+  }
+
+  .cta-button {
+    display: inline-block;
+    background: white;
+    color: #2D5F8D !important;
+    padding: 15px 40px;
+    border-radius: 8px;
+    text-decoration: none !important;
+    font-weight: bold;
+    font-size: 1.1rem;
+    margin-top: 10px;
+    transition: all 0.2s;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  }
+
+  .cta-button:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  }
+
+  /* Data Table */
+  .table-container {
+    margin: 30px 0;
+    overflow-x: auto;
+  }
+
+  .table-caption {
+    margin-bottom: 12px;
+    font-size: 1.1rem;
+  }
+
+  .data-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.95rem;
+  }
+
+  .data-table th,
+  .data-table td {
+    padding: 12px 16px;
+    text-align: left;
+    border: 1px solid #e0e0e0;
+  }
+
+  .data-table th {
+    background-color: #f5f5f5;
+    font-weight: 600;
+  }
+
+  .data-table tr:nth-child(even) {
+    background-color: #fafafa;
+  }
+
+  .data-table td:first-child {
+    font-weight: 600;
+  }
+</style>
