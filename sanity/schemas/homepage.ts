@@ -1,4 +1,4 @@
-import { defineField, defineType, defineArrayMember } from 'sanity';
+import { defineField, defineType } from 'sanity';
 
 export default defineType({
   name: 'homepage',
@@ -61,21 +61,7 @@ export default defineType({
       name: 'features',
       title: 'Features',
       type: 'array',
-      of: [
-        defineArrayMember({
-          name: 'feature',
-          type: 'object',
-          title: 'Feature',
-          fields: [
-            { name: 'icon', title: 'Icon Name', type: 'string', description: 'e.g., user, lightning, heart' },
-            { name: 'title', title: 'Title', type: 'string' },
-            { name: 'description', title: 'Description', type: 'text' },
-          ],
-          preview: {
-            select: { title: 'title' },
-          },
-        }),
-      ],
+      of: [{ type: 'feature' }],
     }),
 
     // Testimonials Section
@@ -89,22 +75,7 @@ export default defineType({
       name: 'testimonials',
       title: 'Testimonials',
       type: 'array',
-      of: [
-        defineArrayMember({
-          name: 'testimonial',
-          type: 'object',
-          title: 'Testimonial',
-          fields: [
-            { name: 'quote', title: 'Quote', type: 'text' },
-            { name: 'name', title: 'Name', type: 'string' },
-            { name: 'role', title: 'Role/Title', type: 'string' },
-            { name: 'image', title: 'Photo', type: 'image' },
-          ],
-          preview: {
-            select: { title: 'name', subtitle: 'role' },
-          },
-        }),
-      ],
+      of: [{ type: 'testimonial' }],
     }),
 
     // FAQ Section
@@ -118,20 +89,7 @@ export default defineType({
       name: 'faqs',
       title: 'FAQs',
       type: 'array',
-      of: [
-        defineArrayMember({
-          name: 'faq',
-          type: 'object',
-          title: 'FAQ',
-          fields: [
-            { name: 'question', title: 'Question', type: 'string' },
-            { name: 'answer', title: 'Answer', type: 'text' },
-          ],
-          preview: {
-            select: { title: 'question' },
-          },
-        }),
-      ],
+      of: [{ type: 'faq' }],
     }),
 
     // CTA Section
