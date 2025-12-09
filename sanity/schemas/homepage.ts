@@ -1,4 +1,4 @@
-import { defineField, defineType } from 'sanity';
+import { defineField, defineType, defineArrayMember } from 'sanity';
 
 export default defineType({
   name: 'homepage',
@@ -62,8 +62,10 @@ export default defineType({
       title: 'Features',
       type: 'array',
       of: [
-        {
+        defineArrayMember({
+          name: 'feature',
           type: 'object',
+          title: 'Feature',
           fields: [
             { name: 'icon', title: 'Icon Name', type: 'string', description: 'e.g., user, lightning, heart' },
             { name: 'title', title: 'Title', type: 'string' },
@@ -72,7 +74,7 @@ export default defineType({
           preview: {
             select: { title: 'title' },
           },
-        },
+        }),
       ],
     }),
 
@@ -88,8 +90,10 @@ export default defineType({
       title: 'Testimonials',
       type: 'array',
       of: [
-        {
+        defineArrayMember({
+          name: 'testimonial',
           type: 'object',
+          title: 'Testimonial',
           fields: [
             { name: 'quote', title: 'Quote', type: 'text' },
             { name: 'name', title: 'Name', type: 'string' },
@@ -99,7 +103,7 @@ export default defineType({
           preview: {
             select: { title: 'name', subtitle: 'role' },
           },
-        },
+        }),
       ],
     }),
 
@@ -115,8 +119,10 @@ export default defineType({
       title: 'FAQs',
       type: 'array',
       of: [
-        {
+        defineArrayMember({
+          name: 'faq',
           type: 'object',
+          title: 'FAQ',
           fields: [
             { name: 'question', title: 'Question', type: 'string' },
             { name: 'answer', title: 'Answer', type: 'text' },
@@ -124,7 +130,7 @@ export default defineType({
           preview: {
             select: { title: 'question' },
           },
-        },
+        }),
       ],
     }),
 

@@ -121,7 +121,7 @@ const icons: Record<string, string> = {
               <img
                 src="/images/appstore.png"
                 alt="Download on TestFlight"
-                class="h-14 hover:opacity-90 transition-opacity"
+                class="h-16 md:h-20 rounded-xl hover:opacity-90 transition-opacity shadow-lg"
               />
             </a>
           </div>
@@ -158,18 +158,18 @@ const icons: Record<string, string> = {
 
       <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
         {features.map((feature) => (
-          <div class="card hover:shadow-lg transition-shadow">
+          <div class="card hover:shadow-lg transition-shadow p-6">
             <div class="flex items-start gap-4">
-              <div class="w-12 h-12 bg-orange/10 rounded-full flex items-center justify-center flex-shrink-0">
-                <svg class="w-6 h-6 text-orange" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div class="w-14 h-14 bg-orange/10 rounded-full flex items-center justify-center flex-shrink-0">
+                <svg class="w-7 h-7 text-orange" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <Fragment set:html={icons[feature.icon]} />
                 </svg>
               </div>
               <div>
-                <h3 class="text-lg font-sansita font-bold text-text-dark mb-2">
+                <h3 class="text-xl font-sansita font-bold text-text-dark mb-2">
                   {feature.title}
                 </h3>
-                <p class="text-text-secondary text-sm leading-relaxed">
+                <p class="text-text-secondary text-base leading-relaxed">
                   {feature.description}
                 </p>
               </div>
