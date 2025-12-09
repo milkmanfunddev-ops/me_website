@@ -2,12 +2,15 @@
 const navItems = [
   { href: '/', label: 'Home' },
   { href: '/blog', label: 'Blog' },
+  { href: '/whats-new', label: "What's New" },
+  { href: '/support', label: 'Support' },
 ];
 ---
 
 <header class="fixed top-0 left-0 right-0 z-50 bg-blackberry/95 backdrop-blur-sm">
   <nav class="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
     <a href="/" class="flex items-center gap-2">
+      <img src="/images/app-icon.png" alt="Mealvana" class="w-8 h-8 rounded-lg" />
       <span class="font-sansita text-xl font-bold text-text-light">Mealvana Endurance</span>
     </a>
 
@@ -20,8 +23,8 @@ const navItems = [
           {item.label}
         </a>
       ))}
-      <a href="#" class="btn-primary text-sm py-2 px-6">
-        Get Started
+      <a href="https://testflight.apple.com/join/1HJG86nz" target="_blank" rel="noopener noreferrer" class="btn-primary text-sm py-2 px-6">
+        Download
       </a>
     </div>
 
@@ -47,8 +50,8 @@ const navItems = [
         {item.label}
       </a>
     ))}
-    <a href="#" class="btn-primary inline-block mt-4 text-sm py-2 px-6">
-      Get Started
+    <a href="https://testflight.apple.com/join/1HJG86nz" target="_blank" rel="noopener noreferrer" class="btn-primary inline-block mt-4 text-sm py-2 px-6">
+      Download
     </a>
   </div>
 </header>

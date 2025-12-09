@@ -7,10 +7,25 @@ const currentYear = new Date().getFullYear();
     <div class="grid md:grid-cols-4 gap-8">
       <!-- Brand -->
       <div class="md:col-span-2">
-        <h3 class="font-sansita text-2xl font-bold mb-4">Mealvana Endurance</h3>
-        <p class="text-text-light/70 max-w-md">
+        <div class="flex items-center gap-3 mb-4">
+          <img src="/images/app-icon.png" alt="Mealvana" class="w-10 h-10 rounded-lg" />
+          <h3 class="font-sansita text-2xl font-bold">Mealvana Endurance</h3>
+        </div>
+        <p class="text-text-light/70 max-w-md mb-6">
           Personalized nutrition plans for endurance athletes. Science-backed meal planning tailored to your training, your body, and your goals.
         </p>
+        <a
+          href="https://testflight.apple.com/join/1HJG86nz"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="inline-block"
+        >
+          <img
+            src="/images/appstore.png"
+            alt="Download on TestFlight"
+            class="h-10 hover:opacity-90 transition-opacity"
+          />
+        </a>
       </div>
 
       <!-- Quick Links -->
@@ -19,24 +34,24 @@ const currentYear = new Date().getFullYear();
         <ul class="space-y-2">
           <li><a href="/" class="text-text-light/70 hover:text-text-light transition-colors">Home</a></li>
           <li><a href="/blog" class="text-text-light/70 hover:text-text-light transition-colors">Blog</a></li>
-          <li><a href="#features" class="text-text-light/70 hover:text-text-light transition-colors">Features</a></li>
-          <li><a href="#faq" class="text-text-light/70 hover:text-text-light transition-colors">FAQ</a></li>
+          <li><a href="/whats-new" class="text-text-light/70 hover:text-text-light transition-colors">What's New</a></li>
+          <li><a href="/support" class="text-text-light/70 hover:text-text-light transition-colors">Support</a></li>
         </ul>
       </div>
 
-      <!-- Contact -->
+      <!-- Legal -->
       <div>
-        <h4 class="font-sansita text-lg font-bold mb-4">Get In Touch</h4>
+        <h4 class="font-sansita text-lg font-bold mb-4">Legal</h4>
         <ul class="space-y-2">
-          <li><a href="#" class="text-text-light/70 hover:text-text-light transition-colors">Contact Us</a></li>
-          <li><a href="#" class="text-text-light/70 hover:text-text-light transition-colors">Privacy Policy</a></li>
-          <li><a href="#" class="text-text-light/70 hover:text-text-light transition-colors">Terms of Service</a></li>
+          <li><a href="/privacy-policy" class="text-text-light/70 hover:text-text-light transition-colors">Privacy Policy</a></li>
+          <li><a href="/terms" class="text-text-light/70 hover:text-text-light transition-colors">Terms of Use</a></li>
+          <li><a href="mailto:support@mealvana.io" class="text-text-light/70 hover:text-text-light transition-colors">Contact Us</a></li>
         </ul>
       </div>
     </div>
 
     <div class="border-t border-text-light/10 mt-12 pt-8 text-center text-text-light/50 text-sm">
-      <p>&copy; {currentYear} Mealvana Endurance. All rights reserved.</p>
+      <p>&copy; {currentYear} Milkman Inc. All rights reserved.</p>
     </div>
   </div>
 </footer>
