@@ -2,76 +2,150 @@
 import Layout from '../layouts/Layout.astro';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
+import { getWhatsNewPage, getReleaseNotes } from '../lib/sanity';
+
+// Fetch from Sanity
+const pageSettings = await getWhatsNewPage();
+const releaseNotes = await getReleaseNotes();
+
+// Page settings with fallbacks
+const title = pageSettings?.title || "What's New";
+const subtitle = pageSettings?.subtitle || 'Stay up to date with the latest features and improvements to Mealvana Endurance.';
+const comingSoonTitle = pageSettings?.comingSoonTitle || 'Coming Soon';
+const comingSoonIntro = pageSettings?.comingSoonIntro || "We're actively working on new features to help you fuel your best performance:";
+const comingSoonFeatures = pageSettings?.comingSoonFeatures || [
+  'Integration with popular fitness platforms (Strava, Garmin, TrainingPeaks)',
+  'Race day packing lists and reminders',
+  'Post-race recovery nutrition plans',
+  'Social sharing and community features',
+  'Advanced analytics and performance tracking',
+];
+const ctaText = pageSettings?.ctaText || 'Have a feature request or feedback?';
+const ctaButtonText = pageSettings?.ctaButtonText || 'Contact Us';
+const ctaButtonLink = pageSettings?.ctaButtonLink || '/support';
+
+// Default release notes if none in Sanity
+const defaultReleaseNotes = [
+  {
+    version: '1.0',
+    title: 'Initial Release',
+    releaseDate: '2024-12-01',
+    isLatest: true,
+    summary: "We're excited to launch Mealvana Endurance! This initial release brings you science-based nutrition planning for endurance athletes, powered by AI and evidence-based research.",
+    features: [
+      { title: 'AI-Powered Nutrition Plans', description: 'Personalized fueling strategies tailored to your race distance, pace, and preferences' },
+      { title: 'Science-Based Calculations', description: 'Built on ACSM energy expenditure formulas and evidence-based sports nutrition research' },
+      { title: 'Food Preference Integration', description: "Tell us what you like and dislike, and we'll plan around your taste" },
+      { title: 'Phase-Specific Guidance', description: 'Separate recommendations for pre-run, during-run, and post-run nutrition' },
+      { title: 'Gut Training Support', description: 'Gradual carbohydrate progression based on your gut training level' },
+      { title: 'Race Day Calendar', description: 'Track upcoming races and plan your nutrition timeline' },
+      { title: 'Carb Loading Calculator', description: 'Multi-day carbohydrate loading plans for race week' },
+      { title: 'Weather-Aware Hydration', description: 'Sodium and fluid recommendations that adjust for conditions' },
+      { title: 'Offline-First Design', description: 'Full functionality without internet connection' },
+    ],
+    supportedSports: ['Running (5K to Ultra-marathons)', 'Cycling', 'Swimming', 'Triathlon'],
+  },
+];
+
+const releases = releaseNotes?.length > 0 ? releaseNotes : defaultReleaseNotes;
+
+// Format date helper
+function formatDate(dateString: string) {
+  if (!dateString) return '';
+  const date = new Date(dateString);
+  return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+}
 ---
 
-<Layout title="What's New">
+<Layout title={title}>
   <Header />
 
   <main class="bg-cream min-h-screen pt-24 pb-16">
     <div class="max-w-4xl mx-auto px-6">
-      <h1 class="text-4xl font-sansita font-bold text-text-dark mb-4">What's New</h1>
+      <h1 class="text-4xl font-sansita font-bold text-text-dark mb-4">{title}</h1>
       <p class="text-text-secondary text-lg mb-8">
-        Stay up to date with the latest features and improvements to Mealvana Endurance.
+        {subtitle}
       </p>
 
       <hr class="border-text-dark/10 my-8" />
 
-      <!-- Latest Release -->
-      <div class="mb-12">
-        <div class="flex items-center gap-3 mb-4">
-          <span class="bg-orange text-white text-xs font-bold px-3 py-1 rounded-full">Latest</span>
-          <span class="text-text-secondary text-sm">December 2024</span>
+      <!-- Release Notes -->
+      {releases.map((release: any, index: number) => (
+        <div class="mb-12">
+          <div class="flex items-center gap-3 mb-4">
+            {release.isLatest && (
+              <span class="bg-orange text-white text-xs font-bold px-3 py-1 rounded-full">Latest</span>
+            )}
+            <span class="text-text-secondary text-sm">{formatDate(release.releaseDate)}</span>
+          </div>
+          <h2 class="text-3xl font-sansita font-bold text-text-dark mb-4">
+            Version {release.version} - {release.title}
+          </h2>
+          {release.summary && (
+            <p class="text-text-secondary mb-6">{release.summary}</p>
+          )}
+
+          {release.features && release.features.length > 0 && (
+            <>
+              <h3 class="text-xl font-sansita font-bold text-text-dark mb-3">Key Features</h3>
+              <ul class="list-disc list-inside text-text-secondary mb-6 space-y-2">
+                {release.features.map((feature: any) => (
+                  <li>
+                    <strong>{feature.title}</strong>
+                    {feature.description && ` - ${feature.description}`}
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
+
+          {release.improvements && release.improvements.length > 0 && (
+            <>
+              <h3 class="text-xl font-sansita font-bold text-text-dark mb-3">Improvements</h3>
+              <ul class="list-disc list-inside text-text-secondary mb-6 space-y-2">
+                {release.improvements.map((improvement: string) => (
+                  <li>{improvement}</li>
+                ))}
+              </ul>
+            </>
+          )}
+
+          {release.supportedSports && release.supportedSports.length > 0 && (
+            <>
+              <h3 class="text-xl font-sansita font-bold text-text-dark mb-3">Supported Sports</h3>
+              <ul class="list-disc list-inside text-text-secondary mb-6 space-y-2">
+                {release.supportedSports.map((sport: string) => (
+                  <li>{sport}</li>
+                ))}
+              </ul>
+            </>
+          )}
+
+          {index < releases.length - 1 && (
+            <hr class="border-text-dark/10 my-8" />
+          )}
         </div>
-        <h2 class="text-3xl font-sansita font-bold text-text-dark mb-4">Version 1.0 - Initial Release</h2>
-        <p class="text-text-secondary mb-6">
-          We're excited to launch Mealvana Endurance! This initial release brings you science-based nutrition planning for endurance athletes, powered by AI and evidence-based research.
-        </p>
-
-        <h3 class="text-xl font-sansita font-bold text-text-dark mb-3">Key Features</h3>
-        <ul class="list-disc list-inside text-text-secondary mb-6 space-y-2">
-          <li><strong>AI-Powered Nutrition Plans</strong> - Personalized fueling strategies tailored to your race distance, pace, and preferences</li>
-          <li><strong>Science-Based Calculations</strong> - Built on ACSM energy expenditure formulas and evidence-based sports nutrition research</li>
-          <li><strong>Food Preference Integration</strong> - Tell us what you like and dislike, and we'll plan around your taste</li>
-          <li><strong>Phase-Specific Guidance</strong> - Separate recommendations for pre-run, during-run, and post-run nutrition</li>
-          <li><strong>Gut Training Support</strong> - Gradual carbohydrate progression based on your gut training level</li>
-          <li><strong>Race Day Calendar</strong> - Track upcoming races and plan your nutrition timeline</li>
-          <li><strong>Carb Loading Calculator</strong> - Multi-day carbohydrate loading plans for race week</li>
-          <li><strong>Weather-Aware Hydration</strong> - Sodium and fluid recommendations that adjust for conditions</li>
-          <li><strong>Offline-First Design</strong> - Full functionality without internet connection</li>
-        </ul>
-
-        <h3 class="text-xl font-sansita font-bold text-text-dark mb-3">Supported Sports</h3>
-        <ul class="list-disc list-inside text-text-secondary mb-6 space-y-2">
-          <li>Running (5K to Ultra-marathons)</li>
-          <li>Cycling</li>
-          <li>Swimming</li>
-          <li>Triathlon</li>
-        </ul>
-      </div>
+      ))}
 
       <hr class="border-text-dark/10 my-8" />
 
       <!-- Coming Soon -->
       <div class="bg-blackberry/5 rounded-2xl p-8">
-        <h2 class="text-2xl font-sansita font-bold text-text-dark mb-4">Coming Soon</h2>
-        <p class="text-text-secondary mb-4">
-          We're actively working on new features to help you fuel your best performance:
-        </p>
+        <h2 class="text-2xl font-sansita font-bold text-text-dark mb-4">{comingSoonTitle}</h2>
+        <p class="text-text-secondary mb-4">{comingSoonIntro}</p>
         <ul class="list-disc list-inside text-text-secondary space-y-2">
-          <li>Integration with popular fitness platforms (Strava, Garmin, TrainingPeaks)</li>
-          <li>Race day packing lists and reminders</li>
-          <li>Post-race recovery nutrition plans</li>
-          <li>Social sharing and community features</li>
-          <li>Advanced analytics and performance tracking</li>
+          {comingSoonFeatures.map((feature: string) => (
+            <li>{feature}</li>
+          ))}
         </ul>
       </div>
 
       <hr class="border-text-dark/10 my-8" />
 
       <div class="text-center">
-        <p class="text-text-secondary mb-4">Have a feature request or feedback?</p>
-        <a href="/support" class="btn-primary inline-block px-8 py-3">
-          Contact Us
+        <p class="text-text-secondary mb-4">{ctaText}</p>
+        <a href={ctaButtonLink} class="btn-primary inline-block px-8 py-3">
+          {ctaButtonText}
         </a>
       </div>
     </div>

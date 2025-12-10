@@ -65,6 +65,7 @@ export default defineType({
       title: 'Content',
       type: 'array',
       of: [
+        // Standard text blocks
         {
           type: 'block',
           styles: [
@@ -79,6 +80,7 @@ export default defineType({
               { title: 'Bold', value: 'strong' },
               { title: 'Italic', value: 'em' },
               { title: 'Underline', value: 'underline' },
+              { title: 'Code', value: 'code' },
             ],
             annotations: [
               {
@@ -90,10 +92,11 @@ export default defineType({
                     name: 'href',
                     type: 'url',
                     title: 'URL',
-                    validation: (Rule) => Rule.uri({
-                      scheme: ['http', 'https', 'mailto', 'tel'],
-                      allowRelative: true,
-                    }),
+                    validation: (Rule) =>
+                      Rule.uri({
+                        scheme: ['http', 'https', 'mailto', 'tel'],
+                        allowRelative: true,
+                      }),
                   },
                 ],
               },
@@ -104,6 +107,7 @@ export default defineType({
             { title: 'Numbered', value: 'number' },
           ],
         },
+        // Image with caption
         {
           type: 'image',
           options: { hotspot: true },
@@ -120,11 +124,38 @@ export default defineType({
             },
           ],
         },
+        // YouTube video embed
+        {
+          type: 'youtubeEmbed',
+        },
+        // Code block with syntax highlighting
+        {
+          type: 'codeBlock',
+        },
+        // Pull quote
+        {
+          type: 'pullQuote',
+        },
+        // Callout box
         {
           name: 'callout',
           title: 'Callout Box',
           type: 'object',
           fields: [
+            {
+              name: 'type',
+              title: 'Type',
+              type: 'string',
+              options: {
+                list: [
+                  { title: 'Info', value: 'info' },
+                  { title: 'Tip', value: 'tip' },
+                  { title: 'Warning', value: 'warning' },
+                  { title: 'Success', value: 'success' },
+                ],
+              },
+              initialValue: 'info',
+            },
             {
               name: 'emoji',
               title: 'Emoji',
@@ -132,29 +163,31 @@ export default defineType({
               initialValue: '💡',
             },
             {
+              name: 'title',
+              title: 'Title',
+              type: 'string',
+            },
+            {
               name: 'text',
               title: 'Text',
               type: 'text',
-            },
-            {
-              name: 'readTime',
-              title: 'Read Time',
-              type: 'string',
             },
           ],
           preview: {
             select: {
               emoji: 'emoji',
+              title: 'title',
               text: 'text',
             },
-            prepare({ emoji, text }) {
+            prepare({ emoji, title, text }) {
               return {
-                title: `${emoji || '💡'} Callout`,
+                title: `${emoji || '💡'} ${title || 'Callout'}`,
                 subtitle: text?.substring(0, 50) + '...',
               };
             },
           },
         },
+        // CTA Box
         {
           name: 'ctaBox',
           title: 'CTA Box',
@@ -192,11 +225,12 @@ export default defineType({
             },
             prepare({ title }) {
               return {
-                title: `🎯 CTA: ${title || 'Call to Action'}`,
+                title: `CTA: ${title || 'Call to Action'}`,
               };
             },
           },
         },
+        // Data Table
         {
           name: 'dataTable',
           title: 'Data Table',
@@ -238,7 +272,7 @@ export default defineType({
             },
             prepare({ caption }) {
               return {
-                title: `📊 Table: ${caption || 'Data Table'}`,
+                title: `Table: ${caption || 'Data Table'}`,
               };
             },
           },

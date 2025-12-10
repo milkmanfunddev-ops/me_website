@@ -1,5 +1,5 @@
 ---
-import { urlFor } from '../lib/sanity';
+import { urlFor, getYouTubeId } from '../lib/sanity';
 
 interface Props {
   value: any[];
@@ -18,6 +18,8 @@ function renderMarks(child: any, markDefs: any[] = []) {
         text = `<em>${text}</em>`;
       } else if (mark === 'underline') {
         text = `<u>${text}</u>`;
+      } else if (mark === 'code') {
+        text = `<code class="inline-code">${text}</code>`;
       } else {
         // Check if it's a link annotation
         const linkDef = markDefs.find((def: any) => def._key === mark);
@@ -78,16 +80,92 @@ function renderBlock(block: any) {
     `;
   }
 
+  // YouTube Embed block
+  if (block._type === 'youtubeEmbed') {
+    const url = block.url || '';
+    const videoId = getYouTubeId(url);
+    const title = block.title || 'YouTube Video';
+    const caption = block.caption || '';
+    const startTime = block.startTime ? `?start=${block.startTime}` : '';
+
+    if (!videoId) return '';
+
+    return `
+      <figure class="youtube-embed my-8">
+        <div class="youtube-wrapper">
+          <iframe
+            src="https://www.youtube.com/embed/${videoId}${startTime}"
+            title="${title}"
+            frameborder="0"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowfullscreen
+          ></iframe>
+        </div>
+        ${caption ? `<figcaption class="text-center text-sm text-text-secondary mt-3">${caption}</figcaption>` : ''}
+      </figure>
+    `;
+  }
+
+  // Code Block
+  if (block._type === 'codeBlock') {
+    const language = block.language || 'text';
+    const code = block.code || '';
+    const filename = block.filename || '';
+    const highlightLines = block.highlightLines || '';
+
+    // Escape HTML in code
+    const escapedCode = code
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+
+    return `
+      <div class="code-block my-8">
+        ${filename ? `<div class="code-filename">${filename}</div>` : ''}
+        <pre class="code-pre" data-language="${language}" data-highlight="${highlightLines}"><code class="language-${language}">${escapedCode}</code></pre>
+      </div>
+    `;
+  }
+
+  // Pull Quote block
+  if (block._type === 'pullQuote') {
+    const quote = block.quote || '';
+    const attribution = block.attribution || '';
+    const source = block.source || '';
+    const style = block.style || 'default';
+
+    const styleClass = style === 'large' ? 'pull-quote-large' : style === 'subtle' ? 'pull-quote-subtle' : 'pull-quote-default';
+
+    return `
+      <blockquote class="pull-quote ${styleClass}">
+        <p class="pull-quote-text">"${quote}"</p>
+        ${attribution || source ? `
+          <footer class="pull-quote-footer">
+            ${attribution ? `<cite class="pull-quote-attribution">— ${attribution}</cite>` : ''}
+            ${source ? `<span class="pull-quote-source">${source}</span>` : ''}
+          </footer>
+        ` : ''}
+      </blockquote>
+    `;
+  }
+
   // Callout block
   if (block._type === 'callout') {
+    const type = block.type || 'info';
     const emoji = block.emoji || '💡';
+    const title = block.title || '';
     const text = block.text || '';
-    const readTime = block.readTime || '';
+
+    const typeClass = `callout-${type}`;
+
     return `
-      <aside class="callout-box">
-        <div class="callout-emoji">${emoji}</div>
+      <aside class="callout-box ${typeClass}">
+        <div class="callout-header">
+          <span class="callout-emoji">${emoji}</span>
+          ${title ? `<span class="callout-title">${title}</span>` : ''}
+        </div>
         <p class="callout-text">${text}</p>
-        ${readTime ? `<p class="callout-readtime"><strong>Read time:</strong> ${readTime}</p>` : ''}
       </aside>
     `;
   }
@@ -186,30 +264,175 @@ const groupedBlocks = value ? groupBlocks(value) : [];
 </div>
 
 <style is:global>
+  /* Inline Code */
+  .inline-code {
+    background-color: #f4f4f4;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-family: 'Monaco', 'Consolas', monospace;
+    font-size: 0.9em;
+    color: #d63384;
+  }
+
+  /* YouTube Embed */
+  .youtube-embed {
+    margin: 2rem 0;
+  }
+
+  .youtube-wrapper {
+    position: relative;
+    padding-bottom: 56.25%; /* 16:9 aspect ratio */
+    height: 0;
+    overflow: hidden;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  }
+
+  .youtube-wrapper iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border-radius: 12px;
+  }
+
+  /* Code Block */
+  .code-block {
+    background-color: #1e1e1e;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+
+  .code-filename {
+    background-color: #2d2d2d;
+    color: #a0a0a0;
+    padding: 8px 16px;
+    font-size: 0.85rem;
+    font-family: 'Monaco', 'Consolas', monospace;
+    border-bottom: 1px solid #3d3d3d;
+  }
+
+  .code-pre {
+    margin: 0;
+    padding: 16px;
+    overflow-x: auto;
+    background-color: #1e1e1e;
+  }
+
+  .code-pre code {
+    color: #d4d4d4;
+    font-family: 'Monaco', 'Consolas', monospace;
+    font-size: 0.9rem;
+    line-height: 1.6;
+  }
+
+  /* Pull Quote */
+  .pull-quote {
+    margin: 2.5rem 0;
+    padding: 1.5rem;
+    border: none;
+    font-style: normal;
+  }
+
+  .pull-quote-default {
+    border-left: 4px solid var(--color-orange, #FF6B35);
+    background-color: #fff5f0;
+    border-radius: 0 8px 8px 0;
+  }
+
+  .pull-quote-large {
+    text-align: center;
+    border-left: none;
+    background: linear-gradient(135deg, #fff5f0 0%, #ffeee6 100%);
+    border-radius: 12px;
+    padding: 2.5rem;
+  }
+
+  .pull-quote-subtle {
+    border-left: 2px solid #e0e0e0;
+    background-color: #fafafa;
+    border-radius: 0 8px 8px 0;
+  }
+
+  .pull-quote-text {
+    font-size: 1.25rem;
+    line-height: 1.6;
+    color: var(--color-text-dark, #333);
+    margin: 0 0 1rem 0;
+  }
+
+  .pull-quote-large .pull-quote-text {
+    font-size: 1.5rem;
+    font-weight: 500;
+  }
+
+  .pull-quote-footer {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .pull-quote-attribution {
+    color: var(--color-orange, #FF6B35);
+    font-weight: 600;
+    font-style: normal;
+  }
+
+  .pull-quote-source {
+    color: var(--color-text-secondary, #666);
+    font-size: 0.9rem;
+  }
+
   /* Callout Box */
   .callout-box {
-    background-color: #f0f7ff;
-    border-left: 4px solid #2D5F8D;
+    border-radius: 8px;
     padding: 20px;
     margin: 30px 0;
-    border-radius: 4px;
+  }
+
+  .callout-info {
+    background-color: #f0f7ff;
+    border-left: 4px solid #2D5F8D;
+  }
+
+  .callout-tip {
+    background-color: #f0fff4;
+    border-left: 4px solid #38a169;
+  }
+
+  .callout-warning {
+    background-color: #fffaf0;
+    border-left: 4px solid #dd6b20;
+  }
+
+  .callout-success {
+    background-color: #f0fff4;
+    border-left: 4px solid #48bb78;
+  }
+
+  .callout-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
   }
 
   .callout-emoji {
     font-size: 1.5rem;
-    margin-bottom: 8px;
+  }
+
+  .callout-title {
+    font-weight: 600;
+    font-size: 1.1rem;
+    color: var(--color-text-dark, #333);
   }
 
   .callout-text {
-    margin: 10px 0;
+    margin: 0;
     color: #666;
     line-height: 1.6;
-  }
-
-  .callout-readtime {
-    margin-top: 12px;
-    font-size: 0.9rem;
-    color: #666;
   }
 
   /* CTA Box */

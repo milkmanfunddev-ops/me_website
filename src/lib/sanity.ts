@@ -15,6 +15,12 @@ export function urlFor(source: SanityImageSource) {
   return builder.image(source);
 }
 
+// Helper to extract YouTube video ID from URL
+export function getYouTubeId(url: string): string | null {
+  const match = url?.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&]+)/);
+  return match ? match[1] : null;
+}
+
 // Query helpers
 export async function getPosts() {
   return client.fetch(`
@@ -83,7 +89,80 @@ export async function getSiteSettings() {
       navItems,
       ctaButton,
       footerDescription,
-      footerLinks
+      footerLinks,
+      copyrightText,
+      socialLinks,
+      downloadLinks,
+      contactInfo,
+      seo
+    }
+  `);
+}
+
+// Legal pages (Privacy Policy, Terms)
+export async function getLegalPage(slug: string) {
+  return client.fetch(
+    `
+    *[_type == "legalPage" && slug.current == $slug][0] {
+      title,
+      slug,
+      lastUpdated,
+      content
+    }
+  `,
+    { slug }
+  );
+}
+
+// Release Notes for What's New page
+export async function getReleaseNotes() {
+  return client.fetch(`
+    *[_type == "releaseNote"] | order(releaseDate desc) {
+      _id,
+      version,
+      title,
+      releaseDate,
+      isLatest,
+      summary,
+      features,
+      improvements,
+      supportedSports
+    }
+  `);
+}
+
+// What's New page settings
+export async function getWhatsNewPage() {
+  return client.fetch(`
+    *[_type == "whatsNewPage"][0] {
+      title,
+      subtitle,
+      comingSoonTitle,
+      comingSoonIntro,
+      comingSoonFeatures,
+      ctaText,
+      ctaButtonText,
+      ctaButtonLink
+    }
+  `);
+}
+
+// Support page
+export async function getSupportPage() {
+  return client.fetch(`
+    *[_type == "supportPage"][0] {
+      title,
+      subtitle,
+      formTitle,
+      formspreeId,
+      subjectOptions,
+      contactTitle,
+      contactEmail,
+      responseTime,
+      faqTitle,
+      faqs,
+      addressTitle,
+      mailingAddress
     }
   `);
 }

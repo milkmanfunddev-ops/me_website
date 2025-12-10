@@ -2,23 +2,57 @@
 import Layout from '../layouts/Layout.astro';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
+import { getSupportPage } from '../lib/sanity';
+
+// Fetch from Sanity
+const supportPage = await getSupportPage();
+
+// Page settings with fallbacks
+const title = supportPage?.title || 'Contact Us';
+const subtitle = supportPage?.subtitle || "We're here to help! If you have questions, feedback, or need assistance with Mealvana, please don't hesitate to reach out.";
+const formTitle = supportPage?.formTitle || 'Send Us a Message';
+const formspreeId = supportPage?.formspreeId || 'xldyagzr';
+const subjectOptions = supportPage?.subjectOptions || ['General Question', 'Bug Report', 'Feature Request', 'Account Issue', 'Other'];
+const contactTitle = supportPage?.contactTitle || 'Other Ways to Reach Us';
+const contactEmail = supportPage?.contactEmail || 'support@mealvana.io';
+const responseTime = supportPage?.responseTime || 'We typically respond within 24-48 hours.';
+const faqTitle = supportPage?.faqTitle || 'Common Questions';
+const addressTitle = supportPage?.addressTitle || 'Mailing Address';
+const mailingAddress = supportPage?.mailingAddress || 'Milkman Inc.\n1500 1st Ave N\nBirmingham, AL 35203';
+
+// Default FAQs
+const defaultFaqs = [
+  {
+    question: 'How do I reset my password?',
+    answer: 'You can reset your password from the login screen by tapping "Forgot Password" and following the instructions sent to your email.',
+  },
+  {
+    question: 'How do I delete my account?',
+    answer: `To delete your account and all associated data, please email us at ${contactEmail} with the subject line "Account Deletion Request."`,
+  },
+];
+
+const faqs = supportPage?.faqs?.length > 0 ? supportPage.faqs : defaultFaqs;
+
+// Parse address for display
+const addressLines = mailingAddress.split('\n');
 ---
 
-<Layout title="Support">
+<Layout title={title}>
   <Header />
 
   <main class="bg-cream min-h-screen pt-24 pb-16">
     <div class="max-w-4xl mx-auto px-6">
-      <h1 class="text-4xl font-sansita font-bold text-text-dark mb-4">Contact Us</h1>
+      <h1 class="text-4xl font-sansita font-bold text-text-dark mb-4">{title}</h1>
       <p class="text-text-secondary text-lg mb-8">
-        We're here to help! If you have questions, feedback, or need assistance with Mealvana, please don't hesitate to reach out.
+        {subtitle}
       </p>
 
       <hr class="border-text-dark/10 my-8" />
 
-      <h2 class="text-2xl font-sansita font-bold text-text-dark mb-6">Send Us a Message</h2>
+      <h2 class="text-2xl font-sansita font-bold text-text-dark mb-6">{formTitle}</h2>
 
-      <form action="https://formspree.io/f/xldyagzr" method="POST" class="space-y-6 mb-12">
+      <form action={`https://formspree.io/f/${formspreeId}`} method="POST" class="space-y-6 mb-12">
         <div>
           <label for="name" class="block text-sm font-medium text-text-dark mb-2">Name</label>
           <input
@@ -50,11 +84,9 @@ import Footer from '../components/Footer.astro';
             class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-orange focus:border-orange outline-none transition-colors bg-white"
           >
             <option value="">Select a topic...</option>
-            <option value="General Question">General Question</option>
-            <option value="Bug Report">Bug Report</option>
-            <option value="Feature Request">Feature Request</option>
-            <option value="Account Issue">Account Issue</option>
-            <option value="Other">Other</option>
+            {subjectOptions.map((option: string) => (
+              <option value={option}>{option}</option>
+            ))}
           </select>
         </div>
 
@@ -79,39 +111,35 @@ import Footer from '../components/Footer.astro';
 
       <hr class="border-text-dark/10 my-8" />
 
-      <h2 class="text-2xl font-sansita font-bold text-text-dark mb-6">Other Ways to Reach Us</h2>
+      <h2 class="text-2xl font-sansita font-bold text-text-dark mb-6">{contactTitle}</h2>
       <p class="text-text-secondary mb-2">
-        <strong>Email:</strong> <a href="mailto:support@mealvana.io" class="text-orange hover:underline">support@mealvana.io</a>
+        <strong>Email:</strong> <a href={`mailto:${contactEmail}`} class="text-orange hover:underline">{contactEmail}</a>
       </p>
-      <p class="text-text-secondary mb-8">We typically respond within 24-48 hours.</p>
+      <p class="text-text-secondary mb-8">{responseTime}</p>
 
       <hr class="border-text-dark/10 my-8" />
 
-      <h2 class="text-2xl font-sansita font-bold text-text-dark mb-6">Common Questions</h2>
+      <h2 class="text-2xl font-sansita font-bold text-text-dark mb-6">{faqTitle}</h2>
 
       <div class="space-y-6 mb-12">
-        <div class="card">
-          <h3 class="text-lg font-sansita font-bold text-text-dark mb-2">How do I reset my password?</h3>
-          <p class="text-text-secondary">
-            You can reset your password from the login screen by tapping "Forgot Password" and following the instructions sent to your email.
-          </p>
-        </div>
-
-        <div class="card">
-          <h3 class="text-lg font-sansita font-bold text-text-dark mb-2">How do I delete my account?</h3>
-          <p class="text-text-secondary">
-            To delete your account and all associated data, please email us at <a href="mailto:support@mealvana.io" class="text-orange hover:underline">support@mealvana.io</a> with the subject line "Account Deletion Request."
-          </p>
-        </div>
+        {faqs.map((faq: { question: string; answer: string }) => (
+          <div class="card">
+            <h3 class="text-lg font-sansita font-bold text-text-dark mb-2">{faq.question}</h3>
+            <p class="text-text-secondary" set:html={faq.answer.replace(contactEmail, `<a href="mailto:${contactEmail}" class="text-orange hover:underline">${contactEmail}</a>`)} />
+          </div>
+        ))}
       </div>
 
       <hr class="border-text-dark/10 my-8" />
 
-      <h2 class="text-2xl font-sansita font-bold text-text-dark mb-4">Mailing Address</h2>
+      <h2 class="text-2xl font-sansita font-bold text-text-dark mb-4">{addressTitle}</h2>
       <p class="text-text-secondary">
-        Milkman Inc.<br />
-        1500 1st Ave N<br />
-        Birmingham, AL 35203
+        {addressLines.map((line: string, i: number) => (
+          <>
+            {line}
+            {i < addressLines.length - 1 && <br />}
+          </>
+        ))}
       </p>
     </div>
   </main>
